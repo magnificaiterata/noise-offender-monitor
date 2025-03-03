@@ -111,10 +111,6 @@ def classify_audio(model_path, audio_file):
     best_label, best_score = processor.process_audio(audio_file)
     return best_label, best_score
 
-import os
-import csv
-import datetime
-
 def save_to_csv(record_path, records):
     # Asegurar que el directorio existe
     os.makedirs(record_path, exist_ok=True)
@@ -264,41 +260,7 @@ def main():
     avg_nps = 21
     # post_to_adafruit(avg_nps)
 
-""" 
-    for i in range(args.n_samples):
-        timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-        mp3_file = os.path.join(audio_dir, f"{timestamp}_{i + 1:02d}.mp3")
-        wav_file = mp3_file.replace(".mp3", ".wav")
 
-        capture_audio(args.in_device, args.sample_time, mp3_file)
-        convert_to_wav(mp3_file, wav_file)
-
-        features = extract_audio_features(wav_file)
-        label, score = classify_audio(model_path, wav_file)
-
-        features["Label"] = label
-        features["Score"] = score
-        features["File"] = mp3_file
-
-        records.append(features)
-
-        if label not in ["One", "One-debil", "One-hifreq"]:
-            detected_music = False
-            break
-
-        upload_to_gdrive(mp3_file)
-
-        if i < args.n_samples - 1:
-            time.sleep(args.sample_interval)
-
-    record_path = f"/var/local/noise-monitor/noise-monitor_records_{datetime.datetime.now().strftime('%Y-%m-%d_%H-%M')}.csv"
-    save_to_csv(record_path, records)
-
-    avg_nps = sum(r["NPS_dB"] for r in records) / len(records) if detected_music else 0
-    post_to_adafruit(avg_nps)
-
-    log_message(f"Finished processing. Music detected: {detected_music}")
- """
 
 
 if __name__ == "__main__":

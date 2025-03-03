@@ -5,6 +5,8 @@ import time
 import datetime
 import subprocess
 import csv
+import re
+import math
 import requests
 import argparse
 from edgeimpulse_audio import AudioFileProcessor
@@ -58,10 +60,12 @@ def capture_audio(device, duration, output_file):
     subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, check=True)
 
 
+
+
+
 def convert_to_wav(input_file, output_file):
     command = ["ffmpeg", "-i", input_file, "-acodec", "pcm_s16le", output_file]
     subprocess.run(command, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-
 
 def extract_audio_features(audio_file):
     command = ["sox", audio_file, "-n", "stat"]
@@ -100,7 +104,6 @@ def extract_audio_features(audio_file):
     features["Hour"] = now.strftime("%H:%M")
 
     return features
-
 
 def classify_audio(model_path, audio_file):
     processor = AudioFileProcessor(model_path)
@@ -154,7 +157,7 @@ def upload_to_gdrive(file_path):
         log_message(f"Uploaded {file_path} to Google Drive.")
     except Exception as e:
         log_message(f"Error uploading to Google Drive: {e}")
-""" 
+ 
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--in_device", default="hw:1,0", help="Input audio device")
@@ -209,72 +212,9 @@ def main():
     post_to_adafruit(avg_nps)
 
     log_message(f"Finished processing. Music detected: {detected_music}")
- """
 
-def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--in_device", default="hw:0,0", help="Input audio device")
-    parser.add_argument("--sample_interval", type=int, default=120, help="Interval between samples (s)")
-    parser.add_argument("--sample_time", type=int, default=10, help="Sample duration (s)")
-    parser.add_argument("--n_samples", type=int, default=3, help="Number of samples per run")
-    parser.add_argument("--noise_prof", default="/usr/local/lib/noise-monitor/modelfile.eim", help="Noise profile path")
 
-    args = parser.parse_args()
 
-    if not check_monitor_status():
-        return
-
-    audio_dir = "/var/local/noise-monitor/audio_samples/"
-    os.makedirs(audio_dir, exist_ok=True)
-
-    # model_path = "/usr/local/lib/noise-monitor/models/modelfile.eim"
-
-    detected_music = True
-    records = []
-    i = 0
-    timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-    mp3_file = os.path.join(audio_dir, f"{timestamp}_{i + 1:02d}.mp3")
-    wav_file = mp3_file.replace(".mp3", ".wav")
-
-    capture_audio(args.in_device, args.sample_time, mp3_file)
-    convert_to_wav(mp3_file, wav_file)
-
-    features = extract_audio_features(wav_file)
-""" 
-    for i in range(args.n_samples):
-        timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-        mp3_file = os.path.join(audio_dir, f"{timestamp}_{i + 1:02d}.mp3")
-        wav_file = mp3_file.replace(".mp3", ".wav")
-
-        capture_audio(args.in_device, args.sample_time, mp3_file)
-        convert_to_wav(mp3_file, wav_file)
-
-        features = extract_audio_features(wav_file)
-        label, score = classify_audio(model_path, wav_file)
-
-        features["Label"] = label
-        features["Score"] = score
-        features["File"] = mp3_file
-
-        records.append(features)
-
-        if label not in ["One", "One-debil", "One-hifreq"]:
-            detected_music = False
-            break
-
-        upload_to_gdrive(mp3_file)
-
-        if i < args.n_samples - 1:
-            time.sleep(args.sample_interval)
-
-    record_path = f"/var/local/noise-monitor/noise-monitor_records_{datetime.datetime.now().strftime('%Y-%m-%d_%H-%M')}.csv"
-    save_to_csv(record_path, records)
-
-    avg_nps = sum(r["NPS_dB"] for r in records) / len(records) if detected_music else 0
-    post_to_adafruit(avg_nps)
-
-    log_message(f"Finished processing. Music detected: {detected_music}")
- """
 
 
 if __name__ == "__main__":
