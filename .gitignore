@@ -1,4 +1,5 @@
 venv/
 __pycache__/
+res/adafruit-io
 *.pyc
 *.pyo
