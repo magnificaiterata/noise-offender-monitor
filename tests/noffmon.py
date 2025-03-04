@@ -77,6 +77,13 @@ def capture_audio(device, duration, output_file):
     ]
     subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, check=True)
 
+def capture_audio_6370b(device, duration, output_file):
+    command = [
+        "ffmpeg", "-f", "alsa", "-channels", "2", "-sample_rate", "44100", "-i", device,
+        "-t", str(duration), "-acodec", "libmp3lame", "-q:a", "2", output_file
+    ]
+    subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, check=True)
+
 
 def convert_to_wav(input_file, output_file):
     command = ["ffmpeg", "-i", input_file, "-acodec", "pcm_s16le", output_file]
@@ -200,7 +207,7 @@ def main():
         mp3_file = os.path.join(AUDIO_DIR, f"{timestamp}_{i + 1:02d}.mp3")
         wav_file = mp3_file.replace(".mp3", ".wav")
 
-        capture_audio(args.in_device, args.sample_time, mp3_file)
+        capture_audio_6370b(args.in_device, args.sample_time, mp3_file)
         convert_to_wav(mp3_file, wav_file)
 
         features = extract_audio_features(wav_file)
