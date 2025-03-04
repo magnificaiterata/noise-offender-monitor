@@ -17,9 +17,26 @@ LOG_FILE_PATH = os.path.join(LOG_DIR, "noise-monitor.log")
 MONITOR_STATUS_FILE = "/etc/noise-monitor/monitor_status"
 AUDIO_DIR = "/var/local/noise-monitor/audio_samples/"
 MODEL_PATH = "/usr/local/lib/noise-monitor/models/modelfile.eim"
+NOISE_PROFILE_PATH = "/usr/local/lib/noise-monitor/noise.prof"
 RECORD_PATH = "/var/local/noise-monitor/"
-ADA_URL = "https://io.adafruit.com/api/v2/makeiterata/feeds/decibel/data"
+ADA_URL = ""
 GDRIVE_PATH = "gdrive:noise-monitor-uploads"
+ADAFRUIT_IO_PATH = "/var/local/noise-monitor/adafruit-io"
+
+# Cargar valores de Adafruit IO
+def load_aio_data(aio_data_path):
+    with open(aio_data_path, "r") as f:
+        lines = f.readlines()
+        aio_data = {}
+        for line in lines:
+            key, value = line.strip().split(" = ")
+            aio_data[key] = value.strip('"')
+    return aio_data
+
+aio_data = load_aio_data(ADAFRUIT_IO_PATH)
+ADAFRUIT_IO_USERNAME = aio_data["ADAFRUIT_IO_USERNAME"]
+ADAFRUIT_IO_KEY = aio_data["ADAFRUIT_IO_KEY"]
+ADA_URL = aio_data["ADAFRUIT_IO_URL"]
 
 def log_message(message):
     # Crear el directorio si no existe
@@ -142,7 +159,7 @@ def save_to_csv(record_path, records):
 def post_to_adafruit(value):
     headers = {
         "Content-Type": "application/json",
-        "X-AIO-Key": ""
+        "X-AIO-Key": ADAFRUIT_IO_KEY
     }
     data = {"value": value}
     try:
@@ -166,7 +183,7 @@ def main():
     parser.add_argument("--sample_interval", type=int, default=120, help="Interval between samples (s)")
     parser.add_argument("--sample_time", type=int, default=10, help="Sample duration (s)")
     parser.add_argument("--n_samples", type=int, default=3, help="Number of samples per run")
-    parser.add_argument("--noise_prof", default=MODEL_PATH, help="Noise profile path")
+    parser.add_argument("--noise_prof", default=NOISE_PROFILE_PATH, help="Noise profile path")
 
     args = parser.parse_args()
 
