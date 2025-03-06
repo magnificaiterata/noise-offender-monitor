@@ -77,12 +77,6 @@ def capture_audio(device, duration, output_file):
     ]
     subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, check=True)
 
-def capture_audio_6370b(device, duration, output_file):
-    command = [
-        "ffmpeg", "-f", "alsa", "-channels", "2", "-sample_rate", "44100", "-i", device,
-        "-t", str(duration), "-acodec", "libmp3lame", "-q:a", "2", output_file
-    ]
-    subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, check=True)
 
 
 def convert_to_wav(input_file, output_file):
