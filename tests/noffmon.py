@@ -14,14 +14,15 @@ from edgeimpulse_audio import AudioFileProcessor
 # Definición de rutas
 LOG_DIR = "/var/log/noise-monitor/"
 LOG_FILE_PATH = os.path.join(LOG_DIR, "noise-monitor.log")
-MONITOR_STATUS_FILE = "/etc/noise-monitor/monitor_status"
+RECORD_PATH = "/var/local/noise-monitor/"
 AUDIO_DIR = "/var/local/noise-monitor/audio_samples/"
+DETECTIONS_DIR = "/var/local/noise-monitor/detection_uploads/"
 MODEL_PATH = "/usr/local/lib/noise-monitor/models/modelfile.eim"
 NOISE_PROFILE_PATH = "/usr/local/lib/noise-monitor/noise.prof"
-RECORD_PATH = "/var/local/noise-monitor/"
+MONITOR_STATUS_FILE = "/usr/local/etc/noise-monitor/monitor_status"
+ADAFRUIT_IO_PATH = "/usr/local/etc/noise-monitor/adafruit-io"
 ADA_URL = ""
 GDRIVE_PATH = "gdrive:noise-monitor-uploads"
-ADAFRUIT_IO_PATH = "/var/local/noise-monitor/adafruit-io"
 
 # Cargar valores de Adafruit IO
 def load_aio_data(aio_data_path):
@@ -129,6 +130,17 @@ def classify_audio(model_path, audio_file):
     best_label, best_score = processor.process_audio(audio_file)
     return best_label, best_score
 
+def process_audio_sample(input_file, output_file, noise_profile):
+    command = [
+        "sox", input_file, output_file, 
+        "noisered", noise_profile, "0.3", 
+        "highpass", "100", "lowpass", "10000", 
+        "compand", "0.3,1", "6:-70,-60,-20", "-5", "-90", "0.2",
+        "norm", "-3"
+    ]
+    subprocess.run(command, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    log_message(f"Processed and saved: {output_file}")
+
 
 def save_to_csv(record_path, records):
     # Asegurar que el directorio existe
@@ -210,7 +222,7 @@ def main():
         label, score = classify_audio(MODEL_PATH, wav_file)
 
         os.remove(wav_file)
-        
+
         features["Label"] = label
         features["Score"] = score
         features["File"] = mp3_file
@@ -234,7 +246,17 @@ def main():
             time.sleep(args.sample_interval)
 
     if detected_music and concatenated_mp3_file:
-        upload_to_gdrive(concatenated_mp3_file)
+        process_detected = False
+        if process_detected:
+            # Procesar el archivo concatenado realce de ganancia, reducción de ruido y normalización
+            processed_file = os.path.join(DETECTIONS_DIR, os.path.basename(concatenated_mp3_file))
+            process_audio_sample(concatenated_mp3_file, processed_file, args.noise_prof)
+        else:
+            # Si no se procesa, usar el archivo concatenado directamente
+            processed_file = concatenated_mp3_file
+
+        # Subir el archivo procesado o concatenado a Google Drive
+        upload_to_gdrive(processed_file)
     elif concatenated_mp3_file:
         os.remove(concatenated_mp3_file)
 
