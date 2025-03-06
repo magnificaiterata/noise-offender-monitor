@@ -78,6 +78,7 @@ def capture_audio(device, duration, output_file):
     subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, check=True)
 
 def capture_audio_6370b(device, duration, output_file):
+    device = "hw:0,0"
     command = [
         "ffmpeg", "-f", "alsa", "-channels", "2", "-sample_rate", "44100", "-i", device,
         "-t", str(duration), "-acodec", "libmp3lame", "-q:a", "2", output_file
@@ -87,6 +88,10 @@ def capture_audio_6370b(device, duration, output_file):
 
 def convert_to_wav(input_file, output_file):
     command = ["ffmpeg", "-i", input_file, "-acodec", "pcm_s16le", output_file]
+    subprocess.run(command, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
+def convert_to_wav_6370b(input_file, output_file):
+    command = ["ffmpeg", "-i", input_file, "-acodec", "pcm_s16le", "-ar", "48000", output_file]
     subprocess.run(command, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
 
@@ -183,6 +188,15 @@ def upload_to_gdrive(file_path):
     except Exception as e:
         log_message(f"Error uploading to Google Drive: {e}")
 
+def upload_to_gdrive_6370b(file_path):
+    GDRIVE_PATH = "palomar:noise-monitor-uploads"
+    try:
+        command = ["rclone", "copy", file_path, GDRIVE_PATH]
+        subprocess.run(command, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        log_message(f"Uploaded {file_path} to Google Drive.")
+    except Exception as e:
+        log_message(f"Error uploading to Google Drive: {e}")
+
 
 def main():
     parser = argparse.ArgumentParser()
@@ -208,7 +222,7 @@ def main():
         wav_file = mp3_file.replace(".mp3", ".wav")
 
         capture_audio_6370b(args.in_device, args.sample_time, mp3_file)
-        convert_to_wav(mp3_file, wav_file)
+        convert_to_wav_6370b(mp3_file, wav_file)
 
         features = extract_audio_features(wav_file)
         label, score = classify_audio(MODEL_PATH, wav_file)
@@ -223,7 +237,7 @@ def main():
             detected_music = False
             break
 
-        upload_to_gdrive(mp3_file)
+        upload_to_gdrive_6370b(mp3_file)
 
         if i < args.n_samples - 1:
             time.sleep(args.sample_interval)
