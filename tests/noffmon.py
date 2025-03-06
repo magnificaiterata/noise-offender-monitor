@@ -29,7 +29,7 @@ def load_aio_data(aio_data_path):
         lines = f.readlines()
         aio_data = {}
         for line in lines:
-            key, value = line.strip().split(" = ")
+            key, value = map(str.strip, line.split("=", 1))
             aio_data[key] = value.strip('"')
     return aio_data
 
