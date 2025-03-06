@@ -263,7 +263,7 @@ def main():
         records.append(features)
 
 
-        if label not in ["One", "One-debil", "One-hifreq"]:
+        if label not in ["zero", "zero-presencia"]:
             detected_music = False
             break
 
@@ -279,7 +279,7 @@ def main():
             time.sleep(args.sample_interval)
 
     if detected_music and concatenated_mp3_file:
-        process_detected = False
+        process_detected = True
         if process_detected:
             # Procesar el archivo concatenado realce de ganancia, reducción de ruido y normalización
             processed_file = os.path.join(DETECTIONS_DIR, os.path.basename(concatenated_mp3_file))
