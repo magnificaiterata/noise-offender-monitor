@@ -152,6 +152,16 @@ def process_audio_sample(input_file, output_file, noise_profile):
     subprocess.run(command, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     log_message(f"Processed and saved: {output_file}")
 
+def process_audio_sample_lowpass(input_file, output_file, noise_profile):
+    command = [
+        "sox", input_file, output_file, 
+        "lowpass", "1600", 
+        "compand", "0.1,1", "6:-70,-60,-10", "-1", "-90", "0.2",
+        "norm", "-3"
+    ]
+    subprocess.run(command, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    log_message(f"Processed and saved: {output_file}")
+
 
 def save_to_csv(record_path, records):
     # Asegurar que el directorio existe
@@ -270,7 +280,7 @@ def main():
         if process_detected:
             # Procesar el archivo concatenado realce de ganancia, reducción de ruido y normalización
             processed_file = os.path.join(DETECTIONS_DIR, os.path.basename(concatenated_mp3_file))
-            process_audio_sample(concatenated_mp3_file, processed_file, args.noise_prof)
+            process_audio_sample_lowpass(concatenated_mp3_file, processed_file, args.noise_prof)
         else:
             # Si no se procesa, usar el archivo concatenado directamente
             processed_file = concatenated_mp3_file
