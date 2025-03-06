@@ -216,6 +216,8 @@ def main():
     detected_music = True
     records = []
 
+    concatenated_mp3_file = None
+
     for i in range(args.n_samples):
         timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
         mp3_file = os.path.join(AUDIO_DIR, f"{timestamp}_{i + 1:02d}.mp3")
@@ -227,20 +229,34 @@ def main():
         features = extract_audio_features(wav_file)
         label, score = classify_audio(MODEL_PATH, wav_file)
 
+        os.remove(wav_file)
+        
         features["Label"] = label
         features["Score"] = score
         features["File"] = mp3_file
 
         records.append(features)
 
-        if label not in ["zero", "zero-presencia"]:
+
+        if label not in ["One", "One-debil", "One-hifreq"]:
             detected_music = False
             break
 
-        upload_to_gdrive_6730b(mp3_file)
+        if concatenated_mp3_file is None:
+            concatenated_mp3_file = os.path.join(AUDIO_DIR, f"{timestamp}.mp3")
+            subprocess.run(["ffmpeg", "-i", mp3_file, "-c", "copy", concatenated_mp3_file])
+        else:
+            temp_file = os.path.join(AUDIO_DIR, f"temp_{timestamp}.mp3")
+            subprocess.run(["ffmpeg", "-i", f"concat:{concatenated_mp3_file}|{mp3_file}", "-c", "copy", temp_file])
+            os.replace(temp_file, concatenated_mp3_file)
 
         if i < args.n_samples - 1:
             time.sleep(args.sample_interval)
+
+    if detected_music and concatenated_mp3_file:
+        upload_to_gdrive_6730b(concatenated_mp3_file)
+    elif concatenated_mp3_file:
+        os.remove(concatenated_mp3_file)
 
     save_to_csv(RECORD_PATH, records)
 
