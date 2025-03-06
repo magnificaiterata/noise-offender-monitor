@@ -214,8 +214,11 @@ def upload_to_gdrive_6730b(file_path):
     GDRIVE_PATH = "palomar:noise-monitor-uploads"
     try:
         command = ["rclone", "copy", file_path, GDRIVE_PATH]
-        subprocess.run(command, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-        log_message(f"Uploaded {file_path} to Google Drive.")
+        result = subprocess.run(command, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE, text=True)
+        if result.returncode == 0:
+            log_message(f"Uploaded {file_path} to Google Drive.")
+        else:
+            log_message(f"Error uploading to Google Drive: {result.stderr}")
     except Exception as e:
         log_message(f"Error uploading to Google Drive: {e}")
 
@@ -223,9 +226,9 @@ def upload_to_gdrive_6730b(file_path):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--in_device", default="hw:1,0", help="Input audio device")
-    parser.add_argument("--sample_interval", type=int, default=120, help="Interval between samples (s)")
+    parser.add_argument("--sample_interval", type=int, default=30, help="Interval between samples (s)")
     parser.add_argument("--sample_time", type=int, default=10, help="Sample duration (s)")
-    parser.add_argument("--n_samples", type=int, default=3, help="Number of samples per run")
+    parser.add_argument("--n_samples", type=int, default=2, help="Number of samples per run")
     parser.add_argument("--noise_prof", default=NOISE_PROFILE_PATH, help="Noise profile path")
 
     args = parser.parse_args()
@@ -286,7 +289,7 @@ def main():
             processed_file = concatenated_mp3_file
 
         # Subir el archivo procesado o concatenado a Google Drive
-        upload_to_gdrive(processed_file)
+        upload_to_gdrive_6730b(processed_file)
     elif concatenated_mp3_file:
         os.remove(concatenated_mp3_file)
 
